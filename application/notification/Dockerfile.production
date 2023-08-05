@@ -1,0 +1,22 @@
+FROM node:18.10.0-bullseye-slim
+
+# Create app directory
+WORKDIR /usr/src/app
+
+# Install app dependencies
+# A wildcard is used to ensure both package.json AND package-lock.json are copied
+# where available (npm@5+)
+COPY package*.json ./
+RUN npm ci --only=production --omit=dev
+
+# Bundle app source
+COPY . .
+
+# Set the user
+USER node
+
+# Expose the Node.js port
+EXPOSE ${NODE_PORT}
+
+# Start the web server.
+CMD [ "node", "src/server.js" ]

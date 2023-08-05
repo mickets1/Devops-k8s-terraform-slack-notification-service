@@ -1,0 +1,24 @@
+<h1>Delete task</h1>
+<form class="row g-3" method="post" action="./tasks/<%= viewData?.id %>/delete">
+  <input type="hidden" name="id" value="<%= viewData?.id %>" />
+  <div class="col-md-12">
+    <label class="form-label" for="descriptionInput">
+      Description
+    </label>
+    <input type="text" class="form-control" id="descriptionInput"
+      placeholder="Update task description here" value="<%= viewData?.description %>"
+      disabled />
+  </div>
+  <div class="col-12">
+    <div class="form-check">
+      <input type="checkbox" class="form-check-input" id="doneCheck"
+      disabled <% if (viewData?.done) { %> checked <% } %> />
+        <label class="form-check-label" for="doneCheck">
+          Done
+        </label>
+    </div>
+  </div>
+  <div class="col-12">
+    <button type="submit" class="btn btn-primary" autofocus="autofocus">Delete</button>
+  </div>
+</form>

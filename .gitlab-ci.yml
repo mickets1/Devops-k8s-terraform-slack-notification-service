@@ -1,0 +1,55 @@
+stages:          # List of stages for jobs, and their order of execution
+  - build-taskit
+  - build-notification
+  - deploy
+
+build:taskit:
+  stage: build-taskit
+  image:
+    name: gcr.io/kaniko-project/executor:v1.9.0-debug
+    entrypoint: [""]
+  script:  # See https://docs.gitlab.com/ee/ci/docker/using_kaniko.html
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}/application/taskit"  
+      --dockerfile "${CI_PROJECT_DIR}/application/taskit/Dockerfile.production"
+      --destination "${CI_REGISTRY_IMAGE}/application/taskit:${CI_COMMIT_TAG:-latest}"            # Tags with "latest" if untagged commit. 
+
+build:notification:
+  stage: build-notification
+  image:
+    name: gcr.io/kaniko-project/executor:v1.9.0-debug
+    entrypoint: [""]
+  script:  # See https://docs.gitlab.com/ee/ci/docker/using_kaniko.html
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}/application/notification"  
+      --dockerfile "${CI_PROJECT_DIR}/application/notification/Dockerfile.production"
+      --destination "${CI_REGISTRY_IMAGE}/application/notification:${CI_COMMIT_TAG:-latest}"            # Tags with "latest" if untagged commit. 
+
+deploy:
+  stage: deploy
+  image:
+    name: gcr.io/k8s-skaffold/skaffold:v2.0.0
+    entrypoint: ['']
+  environment:
+    name: production
+    url: $TASKIT_URL # Set as environment variable. URL to your application. Ie HTTP://cscloud6-25.lnu.se
+  when: manual
+  script:
+    - kubectl config get-contexts
+   # Configure kubectl to use our own k8s cluster, you need to setup an Gitlab agent in you k8s kluster
+    - kubectl config use-context $K8S_CONTEXT
+   # Authorize the cluster to pull images from our registry. (synced against Deploy Token "gitlab-deploy-token")
+    - kubectl delete secret regcred || true
+    - kubectl create secret docker-registry regcred --docker-server=$CI_REGISTRY --docker-username=$CI_DEPLOY_USER --docker-password=$CI_DEPLOY_PASSWORD
+
+    - kubectl apply -f ./application/k8s/rabbitmq.yaml
+    - kubectl apply -f ./application/k8s/redis.yaml
+    - kubectl apply -f ./application/k8s/taskit.yaml
+    - kubectl apply -f ./application/k8s/mongodb.yaml
+    - kubectl apply -f ./application/k8s/notification.yaml
+    - kubectl apply -f ./application/k8s/ingress-prod.yaml
+    
+   # Debugging outputs after completion
+    - kubectl get deployments
+    - kubectl get pods
+    - kubectl get services

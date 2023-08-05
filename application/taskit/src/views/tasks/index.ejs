@@ -1,0 +1,33 @@
+<h1>Tasks</h1>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Done</th>
+      <th>Description</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if (viewData?.tasks?.length) { %>
+      <% for (const task of viewData.tasks) { %>
+        <tr>
+          <td class="text-center text-primary"><input class="form-check-input" type="checkbox" id="doneCheck" disabled
+              <% if (task.done) { %> checked <% } %> /></td>
+          <td class="w-100 <% if (task.done) { %> text-muted <% } %>">
+            <%= task.description %>
+          </td>
+          <td class="text-nowrap">
+            <a href="./tasks/<%= task.id %>/update">Update</a>
+            <a href="./tasks/<%= task.id %>/delete">Delete</a>
+          </td>
+        </tr>
+      <% } %>
+    <% } else { %>
+      <tr>
+        <td colspan="3" class="text-center text-danger">
+          There are no tasks to display
+        </td>
+      </tr>
+    <% } %>
+  </tbody>
+</table>

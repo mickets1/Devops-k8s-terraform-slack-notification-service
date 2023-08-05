@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    service.name: taskit
+  name: taskit
+spec:
+  type: NodePort # Using this to connect loadBalancer to in CSCloud
+  ports:
+    - name: "task-it-port"
+      port: 8888
+      targetPort: 8080
+  selector:
+    deployment.name: taskit
+status:
+  loadBalancer: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taskit
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      deployment.name: taskit
+  template:
+    metadata:
+      labels:
+        deployment.name: taskit
+    spec:
+      containers:
+      - name: taskit
+        #local:
+        image: taskit
+        #Production:
+        #image: gitlab.lnu.se:5050/2dv013/student/ma225gn/part2-architecture/taskit/application/taskit:latest
+        env:
+        - name: STUDENTID
+          value: '****'
+        - name: RABBITMQ_PASSWORD
+          value: secretpassword
+        - name: REDIS_PASSWORD
+          value: secretpassword
+        - name: DB_CONNECTION_STRING
+          value: "mongodb://mongodb:27017/tasks"
+        - name: PORT
+          value: "8080"
+        - name: NODE_PORT
+          value: "3000"
+        - name: BASE_URL
+          value: "/"
+        - name: SESSION_NAME
+          value: "session"
+        - name: SESSION_SECRET
+          value: "h43oi7foiasjhd9w894pasuf"
+        ports:
+          - containerPort: 8080
+      imagePullSecrets:
+      - name: regcred # Secret set as a secret in the cluster
+
